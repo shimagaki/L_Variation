@@ -17,8 +17,8 @@ include("/Users/kaishimgakki/Documents/Info-Tech/Programming/dca_tools_Julia/dca
 include("/Users/kaishimgakki/Documents/Info-Tech/Programming/dca_tools_Julia/dca_tools/basic_analysis.jl")
 include("/Users/kaishimgakki/Documents/Info-Tech/Programming/dca_tools_Julia/dca_tools/basic_Hopfield.jl")
 
-function output_statistics_temp(L::Int64, P::Int64, n_sample::Int64, n_weight::Int64,  xi::Array{Float64, 2}, h::Array{Float64, 1}, f1_msa::Array{Float64, 1}, f2_msa::Array{Float64, 2}, c2_msa::Array{Float64, 2})
-	A_model = rand(0:20, L)	
+function output_statistics_temp(q::Int64, L::Int64, P::Int64, n_sample::Int64, n_weight::Int64,  xi::Array{Float64, 2}, h::Array{Float64, 1}, f1_msa::Array{Float64, 1}, f2_msa::Array{Float64, 2}, c2_msa::Array{Float64, 2})
+	A_model = rand(0:(q-1), L)	
 	H_model=zeros(P)
 	for m=1:1000
 		H_model = sampling_hidden(P,L,A_model,xi)
@@ -135,7 +135,7 @@ end
 ########### main #############
 q=4
 P=3
-N_max = 1000
+N_max = 300
 lambda_h,lambda_xi =0.02, 0.02 
 reg_h, reg_xi = 1e-3, 1e-3 #reg_xi=1e-1 works well -> NO! Hiddens go zeros!  
 
@@ -174,7 +174,7 @@ n_weight = 30
 
 n_divi = 2
 d_n_batch = Int( floor(M_msa / float(n_divi)) )
-for epoch=1:8_000
+for epoch=1:12_000
 	global X_msa, xi,h,X_after_transition,k_max,M_msa,q,L, lambda_h, lambda_xi, reg_h, reg_xi, f1_msa, f2_msa, c2_msa
 	
 	for n_b in 1:n_divi	
@@ -206,13 +206,13 @@ for epoch=1:8_000
 
 	end
 
-	if(epoch%2000==0)
-		fname_out = "/data/shimagaki/Adding_couplings/PF76_init_HP/peq"*string(P)*"/parameters-t"*string(epoch)*"_add_couplings.txt"
+	if(epoch%4000==0)
+		fname_out = "./parameters-t"*string(epoch)*"_add_couplings.txt"
 		#n_sample = 5000
 		#th = 1e-5	
 		th = 0	
 		alpha = 1e-1 #pseudocount	
-		(f1_samples, f2_samples) = output_statistics_temp(L,P,n_sample,n_weight, xi,h, f1_msa, f2_msa, c2_msa)
+		(f1_samples, f2_samples) = output_statistics_temp(q, L,P,n_sample,n_weight, xi,h, f1_msa, f2_msa, c2_msa)
 		
 		(J_opt_Int, J_opt_Float) = get_J_opt_Likelihood_Variation(alpha, th, q, L, f1_msa, f2_msa, f2_samples)
 		
