@@ -35,8 +35,6 @@ function output_statistics_temp(q::Int64, L::Int64, P::Int64, n_sample::Int64, n
 		for i=1:L
 			X_output[m,i] = A_model[i]	
 		end
-
-	
 	end
 	(M_eff, L, f1_out, f2_out, c2_out) = f1_f2_c2(X_output, ones(n_sample),q)	
 	return (f1_out, f2_out)
