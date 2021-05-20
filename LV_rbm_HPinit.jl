@@ -21,14 +21,14 @@ function output_statistics_temp(q::Int64, L::Int64, P::Int64, n_sample::Int64, n
 	A_model = rand(0:(q-1), L)	
 	H_model=zeros(P)
 	for m=1:1000
-		H_model = sampling_hidden(P,L,A_model,xi)
+		H_model = sampling_hidden(q, P,L,A_model,xi)
 		A_model = sampling_visible(q,L,P, H_model, h, xi)
 	end	
 	X_output = zeros(Int64, n_sample, L)	
 	
 	for m=1:n_sample
 		for t=1:n_weight
-			H_model = sampling_hidden(P,L,A_model,xi)
+			H_model = sampling_hidden(q, P,L,A_model,xi)
 			A_model = sampling_visible(q,L,P, H_model, h, xi)
 		end
 		
@@ -53,11 +53,11 @@ function get_J_opt_Likelihood_Variation(alpha, th, q, L, f1_msa, f2_msa, f2_mode
 			MI_ele= 0.0	
 			for a in 1:q
 				for b in 1:q
-					f_d = (1-alpha)*f2_msa[(i-1)*q+a, (j-1)*q+b]+alpha*scale 
-					f_m =(1-alpha)*f2_model[(i-1)*q+a, (j-1)*q+b]+alpha*scale 
+					f_d = (1-alpha)*f2_msa[km(i,a,q), km(j,b,q)]+alpha*scale 
+					f_m =(1-alpha)*f2_model[km(i,a,q), km(j,b,q)]+alpha*scale 
 					if(f_d>th && f_m>th)	
 						delta_l_of_J_block += f_d * log(f_d / f_m )	
-						f_d_a_b =  (1-alpha)*f1_msa[(i-1)*q+a]*f1_msa[(j-1)*q+b]+alpha*scale	
+						f_d_a_b =  (1-alpha)*f1_msa[km(i,a,q)]*f1_msa[km(j,b,q)]+alpha*scale	
 						MI_ele += f_d * log(f_d / (f_d_a_b) )	
 					end	
 				end
@@ -66,8 +66,8 @@ function get_J_opt_Likelihood_Variation(alpha, th, q, L, f1_msa, f2_msa, f2_mode
 		
 			for a in 1:q
 				for b in 1:q
-					f_d = (1-alpha)*f2_msa[(i-1)*q+a, (j-1)*q+b]+alpha*scale 
-					f_m =(1-alpha)*f2_model[(i-1)*q+a, (j-1)*q+b]+alpha*scale 
+					f_d = (1-alpha)*f2_msa[km(i,a,q), km(j,b,q)]+alpha*scale 
+					f_m =(1-alpha)*f2_model[km(i,a,q), km(j,b,q)]+alpha*scale 
 					
 					J_elem=0.0; delta_l_of_J_elem=0.0; J_block=0.0	
 					if(f_d>th && f_m>th)	
@@ -104,19 +104,19 @@ function output_paramters_adding_couplings(fname_out::String, L::Int64, q::Int64
 	for i=1:L
 		for mu=1:P 
 			for a=1:q
-				println(fout, "xi ", i-1, " ", mu-1, " ", a-1, " ", xi[(i-1)*P+mu, a])
+				println(fout, "xi ", i-1, " ", mu-1, " ", a-1, " ", xi[mu, km(i,a,q)])
 			end
 		end
 	end
 	
 	for i=1:L
 		for a=1:q
-			println(fout, "h ", i-1, " ", a-1, " ", h[(i-1)*q+a])
+			println(fout, "h ", i-1, " ", a-1, " ", h[km(i,a,q)])
 		end
 	end
 	close(fout)
 end
-
+"""
 function convert_xi(q::Int64, L::Int64, p::Int64, xi)
 	xi_convert = zeros(L*P, q)
 
@@ -129,6 +129,7 @@ function convert_xi(q::Int64, L::Int64, p::Int64, xi)
 	end
 	return xi_convert
 end
+"""
 
 ########### main #############
 q=4
@@ -157,7 +158,7 @@ h = log.(f1_msa+0.0001*ones(size(f1_msa)))
 (Xi_p, Xi_m, p1, p2) = main_HP(q, L, fname_seq, file_key, fname_fig, P_p, P_m, th_MSA, pseudo_para);
 xi = copy( Xi_p[2:(P+1), :])
 
-xi = convert_xi(q,L,P, xi)
+#xi = convert_xi(q,L,P, xi)
 xi_vec_temp = 0;
 
 (f1_temp,f2_temp, psi_data_temp, psi_model_temp, X_after_transition) = pCDk_rbm(q, L, P, 
