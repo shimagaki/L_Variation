@@ -152,8 +152,9 @@ c_vec_msa = vec(c2_msa)
 
 lambda_h,lambda_xi = 0.1, 1.0 
 reg_h, reg_xi = 1e-3, 1e-3 #reg_xi=1e-1 works well -> NO! Hiddens go zeros!  
-
-(h, J) = init_h_J(f1_msa, q, L, Meff)
+h = log.(f1_msa + 0.1 / Meff * ones(q*L))
+#(h, J) = init_h_J(f1_msa, q, L, Meff)
+J = zeros(q*L, q*L)
 J_filter = zeros(Int64, L, L)
 println("Done set the model paramters.")
 
@@ -178,11 +179,21 @@ for epoch=1:epoch_max
 	global A, J, J_filter, h, f1_msa, f2_msa, c2_msa, c_vec_msa
 	
 	alpha = 1e-30 #pseudocount alpha = 1e-30
+	if(epoch==1) t_eq = 1000 end
+	if(epoch>1) t_eq = 1 end
 	
 	(f1_samples, f2_samples, A, E1_ave, E2_ave, mc, mslope, cc, cslope) = get_f1_f2(L, q, n_sample, t_weight, t_eq, A, h, J, f1_msa, c_vec_msa)
 	
+
+
+
 	(i_max, j_max, delta_l_block_tot, J_block_tot, MI_ele_tot) = get_coupling_J_likelihood_Block(alpha, q, L, f1_msa, f2_msa, f2_samples, J_filter)
+	
+	# --- Adding the couplings ----#
 	J_filter[i_max, j_max] = 1; J_filter[j_max, i_max] = 1
+	J[km.(i_max, 1:q, q), km.(j_max, 1:q, q)] = copy(J_block_tot[km.(i_max, 1:q, q), km.(j_max, 1:q, q)])	
+	J[km.(j_max, 1:q, q), km.(i_max, 1:q, q)] = copy(J_block_tot[km.(j_max, 1:q, q), km.(i_max, 1:q, q)])	
+	
 	
 	# The definition of the BIC is the same as the article of Silvio and Federico. 
 	BIC_local = 2 * Meff*delta_l_block_tot[i_max, j_max] - log(Meff)  
