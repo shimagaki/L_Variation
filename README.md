@@ -1,3 +1,2 @@
-L_Variation
-Use RBMs.
+Likelihood Variation using RBMs.
 
